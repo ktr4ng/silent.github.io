@@ -482,14 +482,14 @@ function drawVideoScene() {
     let d1 = dist(landmarks[8][0], landmarks[8][1], landmarks[0][0], landmarks[0][1]);
     let d2 = dist(landmarks[12][0], landmarks[12][1], landmarks[0][0], landmarks[0][1]);
     
-    // Nếu khoảng cách ngón tay xa cổ tay (Mở lòng bàn tay)
+   
     if ((d1 + d2) / 2 > handSize * 1.1) {
-      targetMorning = 0;   // Ẩn buổi sáng
-      targetNight = 255;   // Hiện thành phố
+      targetMorning = 0;   
+      targetNight = 255;   
     } else {
-      // Ngược lại (Nắm tay)
-      targetMorning = 255; // Hiện buổi sáng
-      targetNight = 0;     // Ẩn thành phố
+
+      targetMorning = 255;
+      targetNight = 0;     
     }
   }
 
