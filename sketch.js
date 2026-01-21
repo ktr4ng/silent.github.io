@@ -56,9 +56,9 @@ const FADE_SPEED = 0.25;
 let scene1StartTime = 0;
 
 function preload() {
-  soundCho = loadSound("chợ.wav");
+  soundCho = loadSound("cho.wav");
   soundCoiXe = loadSound("coi xe.wav");
-  soundMayKhoan = loadSound("máy_khoan.wav");
+  soundMayKhoan = loadSound("may_khoan.wav");
 }
 
 function setup() {
