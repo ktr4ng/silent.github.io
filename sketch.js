@@ -187,7 +187,7 @@ class DustParticle {
 class SandParticle {
   constructor(x, y) {
     this.pos = createVector(x, y);
-    this.vel = createVector(random(-1, 1), random(-2, 0));
+    this.vel = createVector(random(-1.5, 1.5), random(-2.5, 0.5));
     this.acc = createVector(0, -0.05);
     this.alpha = 255;
     this.size = random(1, 3);
@@ -195,7 +195,7 @@ class SandParticle {
   update() {
     this.vel.add(this.acc);
     this.pos.add(this.vel);
-    this.alpha -= 3;
+    this.alpha -= 4;
   }
   display() {
     noStroke();
@@ -281,13 +281,21 @@ function drawFinalQuestionEffect() {
   if (showFinalQuestion) {
     push();
     textFont("Zalando Sans Expanded");
+    
+    // --- Dòng 1: Câu hỏi chính ---
     textSize(20);
     let q = "Have you ever wondered how noise pollution affects humans?";
     let tw = textWidth(q);
     let qY = height - 120;
-    
     let isHoverQ = mouseX > width/2 - tw/2 && mouseX < width/2 + tw/2 && mouseY > qY - 20 && mouseY < qY + 20;
     
+    // --- Dòng 2: Gợi ý click ---
+    textSize(13);
+    let hint = "click random on the screen to see";
+    let th = textWidth(hint);
+    let hY = height - 90;
+    let isHoverH = mouseX > width/2 - th/2 && mouseX < width/2 + th/2 && mouseY > hY - 15 && mouseY < hY + 15;
+
     if (questionDissolved) {
       for (let i = sandParticles.length - 1; i >= 0; i--) {
         sandParticles[i].update();
@@ -298,6 +306,9 @@ function drawFinalQuestionEffect() {
     } else {
       fill(isHoverQ ? color(186, 210, 91) : 200);
       text(q, width/2, qY);
+      
+      fill(isHoverH ? color(186, 210, 91) : 140);
+      text(hint, width/2, hY);
     }
     pop();
   }
@@ -306,15 +317,22 @@ function drawFinalQuestionEffect() {
 function dissolveQuestion() {
   if (!questionDissolved) {
     questionDissolved = true;
-    let q = "Have you ever wondered how noise pollution affects humans?";
     textFont("Zalando Sans Expanded");
-    textSize(20);
-    let tw = textWidth(q);
-    let qY = height - 120;
     
-    // Create particles along the text line
+    // Hạt cho câu hỏi chính
+    textSize(20);
+    let q = "Have you ever wondered how noise pollution affects humans?";
+    let tw = textWidth(q);
     for (let i = 0; i < 400; i++) {
-      sandParticles.push(new SandParticle(width/2 + random(-tw/2, tw/2), qY + random(-10, 10)));
+      sandParticles.push(new SandParticle(width/2 + random(-tw/2, tw/2), height - 120 + random(-10, 10)));
+    }
+    
+    // Hạt cho dòng gợi ý
+    textSize(13);
+    let hint = "click random on the screen to see";
+    let th = textWidth(hint);
+    for (let i = 0; i < 200; i++) {
+      sandParticles.push(new SandParticle(width/2 + random(-th/2, th/2), height - 90 + random(-8, 8)));
     }
   }
 }
@@ -467,47 +485,26 @@ function drawUI() {
   pop();
 }
 
-// ======================================================
-// UPDATED INTERACTION LOGIC
-// ======================================================
 function drawVideoScene() {
-  // Logic đảo ngược: 
-  // Mở tay -> Urban Night (City)
-  // Nắm tay -> Morning (Quiet)
   let targetMorning = 255, targetNight = 0; 
-  
   if (predictions.length > 0) {
     let landmarks = predictions[0].landmarks;
     let handSize = dist(landmarks[0][0], landmarks[0][1], landmarks[12][0], landmarks[12][1]);
     let d1 = dist(landmarks[8][0], landmarks[8][1], landmarks[0][0], landmarks[0][1]);
     let d2 = dist(landmarks[12][0], landmarks[12][1], landmarks[0][0], landmarks[0][1]);
-    
-   
-    if ((d1 + d2) / 2 > handSize * 1.1) {
-      targetMorning = 0;   
-      targetNight = 255;   
-    } else {
-
-      targetMorning = 255;
-      targetNight = 0;     
-    }
+    if ((d1 + d2) / 2 > handSize * 1.1) { targetMorning = 0; targetNight = 255; }
+    else { targetMorning = 255; targetNight = 0; }
   }
-
   alphaMorning = lerp(alphaMorning, targetMorning, FADE_SPEED);
   alphaNight = lerp(alphaNight, targetNight, FADE_SPEED);
-  
   let intensity = sliderGlitch.value();
   let masterVol = sliderVolume.value() / 100;
-
   push();
   if (intensity === 0) {
     if (alphaMorning > 1) { tint(255, alphaMorning); image(videoMorning, 0, 0, width, height); }
     if (alphaNight > 1) { tint(255, alphaNight); image(videoNight, 0, 0, width, height); }
-  } else {
-    applyPixelatedGlitch(intensity);
-  }
+  } else applyPixelatedGlitch(intensity);
   pop();
-  
   videoMorning.volume((alphaMorning / 255) * masterVol);
   videoNight.volume((alphaNight / 255) * masterVol);
 }
@@ -552,15 +549,9 @@ function drawFixedBubble(x, y, title, status, a, s) {
   push();
   translate(x, y);
   scale(s);
-  let w = 340;
-  let h = 100;
-  fill(186, 210, 91, a);
-  noStroke();
-  beginShape();
-  vertex(0, 0);
-  vertex(15, -15);
-  vertex(30, -15);
-  endShape(CLOSE);
+  let w = 340; let h = 100;
+  fill(186, 210, 91, a); noStroke();
+  beginShape(); vertex(0, 0); vertex(15, -15); vertex(30, -15); endShape(CLOSE);
   push();
   translate(0, -h - 13);
   let grad = drawingContext.createLinearGradient(0, 0, w, 0);
@@ -568,84 +559,59 @@ function drawFixedBubble(x, y, title, status, a, s) {
   grad.addColorStop(1, `rgba(180, 150, 230, ${a / 255})`);
   drawingContext.fillStyle = grad;
   rect(0, 0, w, h, 20);
-  textAlign(LEFT, TOP);
-  textFont("Zalando Sans Expanded");
-  fill(30, a * 0.9);
-  textSize(16);
-  textStyle(BOLD);
-  text(title, 22, 18);
-  textSize(12);
-  textStyle(NORMAL);
-  fill(50, a * 0.8);
-  text(status, 22, 45, w - 44);
-  pop();
-  pop();
+  textAlign(LEFT, TOP); textFont("Zalando Sans Expanded");
+  fill(30, a * 0.9); textSize(16); textStyle(BOLD); text(title, 22, 18);
+  textSize(12); textStyle(NORMAL); fill(50, a * 0.8); text(status, 22, 45, w - 44);
+  pop(); pop();
 }
 
 function mousePressed() {
-  if (showInstructions) {
-    showInstructions = false;
-    return;
-  }
-
-  let posX = width / 2;
-  let posY = height - 60;
+  if (showInstructions) { showInstructions = false; return; }
+  let posX = width / 2; let posY = height - 60;
   
   if (scene === 2) {
+    // Logic restart
     let restartX = 60, restartY = 50;
     let twRestart = textWidth("RESTART THE JOURNEY");
     if (mouseX > restartX - 20 && mouseX < restartX + twRestart + 40 && mouseY > restartY - 20 && mouseY < restartY + 20) {
-      resetExperience();
-      return;
+      resetExperience(); return;
     }
 
+    // Logic tan biến chữ
     if (showFinalQuestion && !questionDissolved) {
-      let qText = "Have you ever wondered how noise pollution affects humans?";
-      textFont("Zalando Sans Expanded");
       textSize(20);
-      let tw = textWidth(qText);
-      let qY = height - 120;
-      if (mouseX > width/2 - tw/2 && mouseX < width/2 + tw/2 && mouseY > qY - 20 && mouseY < qY + 20) {
-        dissolveQuestion();
-        return;
-      }
+      let twQ = textWidth("Have you ever wondered how noise pollution affects humans?");
+      textSize(13);
+      let twH = textWidth("click random on the screen to see");
+      
+      let inQ = mouseX > width/2 - twQ/2 && mouseX < width/2 + twQ/2 && mouseY > height-120-20 && mouseY < height-120+20;
+      let inH = mouseX > width/2 - twH/2 && mouseX < width/2 + twH/2 && mouseY > height-90-15 && mouseY < height-90+15;
+      
+      if (inQ || inH) { dissolveQuestion(); return; }
     }
+    
+    // Tạo bubble mới
+    let index = clickCount % diseaseList.length;
+    revealedDiseases.push({ x: mouseX, y: mouseY, info: diseaseList[index], alpha: 0, scale: 0.2, seed: random(1000) });
+    clickCount++;
   }
   
   if (scene === 0 && !showIntro && millis() - arrowStartTime > 5000) {
     if (mouseX > posX - 100 && mouseX < posX + 100 && mouseY > posY - 20 && mouseY < posY + 20) {
-      scene = 1;
-      scene1StartTime = millis();
+      scene = 1; scene1StartTime = millis();
       soundCho.stop(); soundCoiXe.stop(); soundMayKhoan.stop();
-      videoMorning.loop(); videoNight.loop();
-      return;
+      videoMorning.loop(); videoNight.loop(); return;
     }
   }
   
   if (scene === 1 && millis() - scene1StartTime > 1000) {
-    if (dist(mouseX, mouseY, 50, height - 50) < 25) {
-      showInstructions = true;
-      return;
-    }
-
+    if (dist(mouseX, mouseY, 50, height - 50) < 25) { showInstructions = true; return; }
     if (millis() - scene1StartTime > 15000) {
        if (mouseX > posX - 100 && mouseX < posX + 100 && mouseY > posY - 20 && mouseY < posY + 20) {
-          scene = 2;
-          scene2StartTime = millis();
-          videoMorning.stop(); videoNight.stop();
-          return;
+          scene = 2; scene2StartTime = millis();
+          videoMorning.stop(); videoNight.stop(); return;
        }
     }
-  }
-  
-  if (scene === 2) {
-    let index = clickCount % diseaseList.length;
-    revealedDiseases.push({
-      x: mouseX, y: mouseY,
-      info: diseaseList[index],
-      alpha: 0, scale: 0.2, seed: random(1000),
-    });
-    clickCount++;
   }
 }
 
@@ -658,10 +624,8 @@ function drawCustomCursor() {
   grad.addColorStop(0.6, "rgba(230, 160, 230, 0.4)");
   grad.addColorStop(1, "rgba(180, 200, 255, 0)");
   drawingContext.fillStyle = grad;
-  noStroke();
-  ellipse(cursorX, cursorY, gradSize * 2, gradSize * 2);
-  fill(255, 200);
-  ellipse(cursorX, cursorY, 4, 4);
+  noStroke(); ellipse(cursorX, cursorY, gradSize * 2, gradSize * 2);
+  fill(255, 200); ellipse(cursorX, cursorY, 4, 4);
   pop();
 }
 
@@ -669,21 +633,18 @@ function startExperience() {
   userStartAudio();
   soundCho.loop(); soundCoiXe.loop(); soundMayKhoan.loop();
   soundCho.setVolume(0); soundCoiXe.setVolume(0); soundMayKhoan.setVolume(0);
-  startTime = millis();
-  experienceStarted = true;
+  startTime = millis(); experienceStarted = true;
 }
 
 function detectHover(x, y) {
-  textFont("Zalando Sans Expanded");
-  textSize(18);
+  textFont("Zalando Sans Expanded"); textSize(18);
   let w = textWidth("How long can it remain quiet?");
   hover = mouseX > x - w / 2 && mouseX < x + w / 2 && mouseY > y - 20 && mouseY < y + 20;
 }
 
 class Crack {
   constructor(x, y, a) {
-    this.pts = [];
-    let px = x, py = y;
+    this.pts = []; let px = x, py = y;
     for (let i = 0; i < 1000; i += 5) {
       px += cos(a) * 5 + random(-1, 1);
       py += sin(a) * 5 + random(-1, 1);
@@ -695,15 +656,10 @@ class Crack {
     if (p < 0.01) return;
     let n = floor(this.pts.length * p);
     push(); noFill();
-    stroke(red(this.col), green(this.col), blue(this.col), 40);
-    strokeWeight(3);
-    beginShape();
-    for (let j = 0; j < n; j++) vertex(this.pts[j].x, this.pts[j].y);
-    endShape();
+    stroke(red(this.col), green(this.col), blue(this.col), 40); strokeWeight(3);
+    beginShape(); for (let j = 0; j < n; j++) vertex(this.pts[j].x, this.pts[j].y); endShape();
     stroke(this.col); strokeWeight(1);
-    beginShape();
-    for (let j = 0; j < n; j++) vertex(this.pts[j].x, this.pts[j].y);
-    endShape();
+    beginShape(); for (let j = 0; j < n; j++) vertex(this.pts[j].x, this.pts[j].y); endShape();
     pop();
   }
 }
